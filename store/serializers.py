@@ -1,6 +1,7 @@
 from decimal import Decimal
 from rest_framework import serializers
 from .models import Category, Product
+from django.utils.text import slugify
 
 # class CategorySerializer(serializers.Serializer):
 # id = serializers.IntegerField()
@@ -58,3 +59,9 @@ class ProductSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError('unit price must be less than 32')
         else:
             return data
+
+    def create(self, validated_data):
+        self.name = validated_data.get('name')
+        slug = slugify(self.name)
+        new_product = Product.objects.create(slug=slug,**validated_data)
+        return new_product
