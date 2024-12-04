@@ -1,6 +1,6 @@
 from django.db import transaction, connection
 from django.db.models import F, ExpressionWrapper, DecimalField
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, redirect
 from .serializers import ProductSerializer,CategorySerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -8,8 +8,17 @@ from .models import Category, Comment, Product, Customer, OrderItem, Order
 from rest_framework import status
 
 
-@api_view()
+@api_view(['GET','POST'])
 def products_list(request):
+    if request.method == 'POST':
+        serializer = ProductSerializer(data= request.data)
+        # if serializer.is_valid():
+        #     serializer.save()
+        serializer.is_valid(raise_exception=True)
+        print(serializer.validated_data)
+        serializer.save()
+        return redirect('products')
+        
     all_products = Product.objects.select_related('category').all()
     serializer = ProductSerializer(all_products, many=True,context={'request':request})
     return Response(serializer.data)
@@ -21,7 +30,7 @@ def product_detail(request,pk):
         product = Product.objects.select_related('category').get(id=pk)
     except Product.DoesNotExist:
         return Response('this product is not exist anymore',status= status.HTTP_404_NOT_FOUND)
-    serializer = ProductSerializer(product)
+    serializer = ProductSerializer(product,context={'request':request})
     return Response(serializer.data)
 
 @api_view()
