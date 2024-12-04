@@ -32,15 +32,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    unit_price_after_tax = serializers.SerializerMethodField()
-
-    def get_unit_price_after_tax(self, product):
-        return round(product.unit_price * Decimal(1.09), 4)
-
-    # category = serializers.HyperlinkedRelatedField(
-    #     queryset=Category.objects.all(),
-    #     view_name="category_detail",
-    # )
+    category = serializers.StringRelatedField()
 
     class Meta:
         model = Product
@@ -53,8 +45,13 @@ class ProductSerializer(serializers.ModelSerializer):
             "inventory",
             "unit_price_after_tax",
         ]
+       
+    unit_price_after_tax = serializers.SerializerMethodField(read_only=True)
+    def get_unit_price_after_tax(self, product):
+        return round(product.unit_price * Decimal(1.09), 4)
 
     def validate(self, data):
+
         self.unit_price = int(data["unit_price"])
         if self.unit_price > 32:
             raise serializers.ValidationError("unit price must be less than 32")
@@ -66,3 +63,4 @@ class ProductSerializer(serializers.ModelSerializer):
         slug = slugify(self.name)
         new_product = Product.objects.create(slug=slug, **validated_data)
         return new_product
+    
