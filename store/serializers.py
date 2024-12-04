@@ -53,15 +53,16 @@ class ProductSerializer(serializers.ModelSerializer):
             "inventory",
             "unit_price_after_tax",
         ]
-    def validate(self,data):
-        self.unit_price = int(data['unit_price'])
+
+    def validate(self, data):
+        self.unit_price = int(data["unit_price"])
         if self.unit_price > 32:
-            raise serializers.ValidationError('unit price must be less than 32')
+            raise serializers.ValidationError("unit price must be less than 32")
         else:
             return data
 
     def create(self, validated_data):
-        self.name = validated_data.get('name')
+        self.name = validated_data.get("name")
         slug = slugify(self.name)
-        new_product = Product.objects.create(slug=slug,**validated_data)
+        new_product = Product.objects.create(slug=slug, **validated_data)
         return new_product

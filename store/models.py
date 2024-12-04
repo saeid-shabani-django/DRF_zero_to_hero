@@ -98,8 +98,6 @@ class OrderItem(models.Model):
 
     class Meta:
         unique_together = [["order", "product"]]
-    
-  
 
 
 class CommentManger(models.Manager):
