@@ -2,7 +2,7 @@ from rest_framework import mixins
 from django.db import transaction, connection
 from django.db.models import F, ExpressionWrapper, DecimalField
 from django.shortcuts import get_object_or_404, redirect
-from .serializers import ProductSerializer, CategorySerializer
+from .serializers import ProductSerializer, CategorySerializer, CommentSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Category, Comment, Product, Customer, OrderItem, Order
@@ -221,3 +221,13 @@ class CategoryViewSet(ModelViewSet):
 
             category_detail.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+
+class CommentViewSet(ModelViewSet):
+    serializer_class = CommentSerializer
+
+    def get_queryset(self):
+        product_pk = self.kwargs['product_pk']
+        comments = Comment.objects.filter(product_id=product_pk)
+        return comments
