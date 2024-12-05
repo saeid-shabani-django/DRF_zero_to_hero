@@ -13,6 +13,7 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
     GenericAPIView,
 )
+from rest_framework.filters import OrderingFilter,SearchFilter
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProductFilter
@@ -195,8 +196,10 @@ from .filters import ProductFilter
 class ProductViewSet(ModelViewSet):
     # queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
-    filter_backends=[DjangoFilterBackend]
+    filter_backends=[DjangoFilterBackend,OrderingFilter,SearchFilter]
     # filterset_fields =['category_id','name']
+    ordering_fields = ['inventory','unit_price']
+    search_fields = ['name',]
     filterset_class = ProductFilter
     def get_queryset(self):
         queryset = Product.objects.select_related("category").all()
