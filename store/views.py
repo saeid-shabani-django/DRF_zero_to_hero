@@ -196,7 +196,7 @@ from .filters import ProductFilter
 class ProductViewSet(ModelViewSet):
     # queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
-    filter_backends=[DjangoFilterBackend,OrderingFilter,SearchFilter]
+    filter_backends=[SearchFilter,DjangoFilterBackend,OrderingFilter]
     # filterset_fields =['category_id','name']
     ordering_fields = ['inventory','unit_price']
     search_fields = ['name',]
