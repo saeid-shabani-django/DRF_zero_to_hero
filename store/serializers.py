@@ -32,7 +32,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 
 class ProductSerializer(serializers.ModelSerializer):
-    category = serializers.StringRelatedField()
+    # category = serializers.StringRelatedField()
 
     class Meta:
         model = Product
@@ -68,5 +68,15 @@ class CommentSerializer(serializers.ModelSerializer):
     class Meta:
         model = Comment 
         fields = ['id','product','name','body','status']
-    product =ProductSerializer()
+        read_only_fields = ['id','product','status']
+    product =ProductSerializer(read_only=True)
+
+    def create(self, validated_data):
+        product_pk = self.context['product_pk']
+        comment = Comment.objects.create(product_id=product_pk,**validated_data)
+        # comment.product_id = product_pk
+        # comment.name = validated_data['name']
+        # comment.body = validated_data['body']
+        # comment.save()
+        return comment
    

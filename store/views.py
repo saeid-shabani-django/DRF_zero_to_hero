@@ -192,8 +192,16 @@ from rest_framework.viewsets import ModelViewSet
 
 
 class ProductViewSet(ModelViewSet):
-    queryset = Product.objects.select_related("category").all()
+    # queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
+
+    def get_queryset(self):
+        queryset = Product.objects.select_related("category").all()
+        category_id = self.request.query_params.get('category_id')
+        if category_id is not None:
+            return queryset.filter(category_id=category_id)
+        else:
+            return queryset
 
     def destroy(self, request, pk):
         product = get_object_or_404(Product.objects.select_related("category"), pk=pk)
@@ -226,8 +234,16 @@ class CategoryViewSet(ModelViewSet):
 
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentSerializer
-
+    
     def get_queryset(self):
         product_pk = self.kwargs['product_pk']
         comments = Comment.objects.filter(product_id=product_pk)
         return comments
+    
+    def get_serializer_context(self):
+        product_pk = self.kwargs['product_pk']
+        return {'product_pk':product_pk}
+    
+    
+
+
