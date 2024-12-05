@@ -8,7 +8,13 @@ from rest_framework.response import Response
 from .models import Category, Comment, Product, Customer, OrderItem, Order
 from rest_framework import status
 from rest_framework.views import APIView
-from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIView,GenericAPIView
+from rest_framework.generics import (
+    ListCreateAPIView,
+    RetrieveUpdateDestroyAPIView,
+    GenericAPIView,
+)
+from rest_framework.viewsets import ModelViewSet
+
 
 # @api_view(["GET", "POST"])
 # def products_list(request):
@@ -43,10 +49,6 @@ from rest_framework.generics import ListCreateAPIView, RetrieveUpdateDestroyAPIV
 #         print(serializer.validated_data)
 #         serializer.save()
 #         return Response(serializer.data)
-
-class ProductList(ListCreateAPIView):
-    queryset = Product.objects.select_related('category').all()
-    serializer_class = ProductSerializer
 
 
 # @api_view(["GET", "PUT", "PATCH", "DELETE"])
@@ -88,14 +90,14 @@ class ProductList(ListCreateAPIView):
 #         else:
 #             return Response("this is related to the orderitem, delete it first")
 
-class ProductDetail(RetrieveUpdateDestroyAPIView):
-    queryset= Product.objects.all()
-    serializer_class = ProductSerializer
+# class ProductDetail(RetrieveUpdateDestroyAPIView):
+#     queryset= Product.objects.all()
+#     serializer_class = ProductSerializer
 
-    
+# class ProductList(ListCreateAPIView):
+#     queryset = Product.objects.select_related('category').all()
+#     serializer_class = ProductSerializer
 
-
-    
 
 # @api_view(["GET", "POST"])
 # def category_list(request):
@@ -110,7 +112,6 @@ class ProductDetail(RetrieveUpdateDestroyAPIView):
 #         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-
 # class CategoryList(APIView):
 #     def get(self,request):
 #         categories = Category.objects.all()
@@ -121,10 +122,6 @@ class ProductDetail(RetrieveUpdateDestroyAPIView):
 #         serializer.is_valid(raise_exception=True)
 #         serializer.save()
 #         return Response(serializer.data, status=status.HTTP_200_OK)
-
-class CategoryList(ListCreateAPIView):
-    serializer_class = CategorySerializer
-    queryset = Category.objects.all()
 
 
 # @api_view(["GET", "PUT", "DELETE"])
@@ -174,26 +171,53 @@ class CategoryList(ListCreateAPIView):
 #                 "You Cannot Remove This Category, Due TO , its dependency to product object",
 #                 status=status.HTTP_400_BAD_REQUEST,
 #             )
-        
 
-class CategoryDetail(RetrieveUpdateDestroyAPIView):
-    queryset = Category.objects.all()
-    serializer_class = CategorySerializer
-    def delete(self,request,pk):
-        category_detail = get_object_or_404(Category, id=pk)
-        if not Product.objects.filter(category=category_detail.id):
-            category_detail.delete()
+# class CategoryList(ListCreateAPIView):
+#     serializer_class = CategorySerializer
+#     queryset = Category.objects.all()
+
+# class CategoryDetail(RetrieveUpdateDestroyAPIView):
+#     queryset = Category.objects.all()
+#     serializer_class = CategorySerializer
+#     def delete(self,request,pk):
+#         category_detail = get_object_or_404(Category, id=pk)
+#         if not Product.objects.filter(category=category_detail.id):
+#             category_detail.delete()
+#             return Response(status=status.HTTP_204_NO_CONTENT)
+#         else:
+#             return Response(
+#                 "You Cannot Remove This Category, Due TO , its dependency to product object",
+#                 status=status.HTTP_400_BAD_REQUEST,
+#             )
+
+
+class ProductViewSet(ModelViewSet):
+    queryset = Product.objects.select_related("category").all()
+    serializer_class = ProductSerializer
+
+    def destroy(self, request, pk):
+        product = get_object_or_404(Product.objects.select_related("category"), pk=pk)
+        if not OrderItem.objects.filter(product=product.id):
+            product.delete()
             return Response(status=status.HTTP_204_NO_CONTENT)
         else:
+            return Response("this is related to the orderitem, delete it first")
+
+
+class CategoryViewSet(ModelViewSet):
+    queryset = Category.objects.prefetch_related("products").all()
+    serializer_class = CategorySerializer
+
+    def destory(self, request, pk):
+
+        category_detail = get_object_or_404(Category, pk=pk)
+
+        if len(Product.objects.filter(category=category_detail.id)) > 0:
+
             return Response(
-                "You Cannot Remove This Category, Due TO , its dependency to product object",
-                status=status.HTTP_400_BAD_REQUEST,
+                "You Cannot Remove This Category, Due TO , its dependency to product object"
             )
+        else:
 
-
-
-
-
-
-
-
+            category_detail.delete()
+            return Response(status=status.HTTP_204_NO_CONTENT)
