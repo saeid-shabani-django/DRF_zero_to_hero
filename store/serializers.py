@@ -64,3 +64,5 @@ class ProductSerializer(serializers.ModelSerializer):
         new_product = Product.objects.create(slug=slug, **validated_data)
         return new_product
     
+
+   
