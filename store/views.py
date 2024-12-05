@@ -15,6 +15,7 @@ from rest_framework.generics import (
 )
 from rest_framework.viewsets import ModelViewSet
 from django_filters.rest_framework import DjangoFilterBackend
+from .filters import ProductFilter
 
 # @api_view(["GET", "POST"])
 # def products_list(request):
@@ -195,8 +196,8 @@ class ProductViewSet(ModelViewSet):
     # queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
     filter_backends=[DjangoFilterBackend]
-    filterset_fields =['category_id','name']
-
+    # filterset_fields =['category_id','name']
+    filterset_class = ProductFilter
     def get_queryset(self):
         queryset = Product.objects.select_related("category").all()
         category_id = self.request.query_params.get('category_id')
