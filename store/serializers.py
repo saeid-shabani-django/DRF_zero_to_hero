@@ -1,6 +1,6 @@
 from decimal import Decimal
 from rest_framework import serializers
-from .models import Category, Product, Comment
+from .models import Category, Product, Comment, Cart, CartItem
 from django.utils.text import slugify
 
 # class CategorySerializer(serializers.Serializer):
@@ -80,3 +80,17 @@ class CommentSerializer(serializers.ModelSerializer):
         # comment.save()
         return comment
    
+
+
+class CartSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Cart
+        fields = ['id','items']
+        read_only_fields=['id']
+    
+
+
+
+
+
+

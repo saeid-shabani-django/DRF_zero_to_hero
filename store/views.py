@@ -2,10 +2,10 @@ from rest_framework import mixins
 from django.db import transaction, connection
 from django.db.models import F, ExpressionWrapper, DecimalField
 from django.shortcuts import get_object_or_404, redirect
-from .serializers import ProductSerializer, CategorySerializer, CommentSerializer
+from .serializers import ProductSerializer, CategorySerializer, CommentSerializer,CartSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Category, Comment, Product, Customer, OrderItem, Order
+from .models import Category, Comment, Product, Customer, OrderItem, Order,Cart,CartItem
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import (
@@ -14,7 +14,7 @@ from rest_framework.generics import (
     GenericAPIView,
 )
 from rest_framework.filters import OrderingFilter,SearchFilter
-from rest_framework.viewsets import ModelViewSet
+from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProductFilter
 
@@ -252,4 +252,11 @@ class CommentViewSet(ModelViewSet):
     
     
 
+class CartViewSet(mixins.CreateModelMixin,
+                   mixins.RetrieveModelMixin,
+                   mixins.UpdateModelMixin,
+                   mixins.DestroyModelMixin,
+                   GenericViewSet):
+    queryset = Cart.objects.all()
+    serializer_class = CartSerializer
 
