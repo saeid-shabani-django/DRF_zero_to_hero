@@ -81,12 +81,18 @@ class CommentSerializer(serializers.ModelSerializer):
         return comment
    
 
+class CartItemSerializer(serializers.ModelSerializer):
+    product = ProductSerializer()
+    class Meta:
+        model = CartItem
+        fields =['id','product','quantity']
 
 class CartSerializer(serializers.ModelSerializer):
+    items = CartItemSerializer(many=True)
     class Meta:
         model = Cart
         fields = ['id','items']
-        read_only_fields=['id']
+        read_only_fields=['id','items']
     
 
 
