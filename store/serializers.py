@@ -85,25 +85,32 @@ class ProductCartItemSerializer(serializers.ModelSerializer):
         model = Product
         fields = ['id','name','unit_price']
 
-class CreateProductCartItemSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Product
-        fields = ['id']
+
 
 class CreateCartItemSerializer(serializers.ModelSerializer):
-    product = CreateProductCartItemSerializer()
+    
     class Meta:
         model = CartItem
         fields = ['id','product','quantity']
 
     def create(self, validated_data):
+        quantity = validated_data.get('quantity')
         cart_pk = self.context.get('cart_pk')
-        return CartItem.objects.create(cart_id=cart_pk,**validated_data)
+        product = validated_data.get('product')
+        if CartItem.objects.filter(cart_id=cart_pk,product_id = product.id).exists():
+            cart_item = CartItem.objects.get(product_id = product.id,cart_id=cart_pk)
+            cart_item.quantity += quantity
+            cart_item.save()
+            return cart_item
+        else:
+            return CartItem.objects.create(cart_id=cart_pk,**validated_data)
+        
+
 
 
 
 class CartItemSerializer(serializers.ModelSerializer):
-    product = ProductCartItemSerializer()
+    product = ProductCartItemSerializer(read_only=True)
     class Meta:
         model = CartItem
         fields =['id','product','quantity','item_price']
@@ -121,13 +128,7 @@ class CartSerializer(serializers.ModelSerializer):
     
     def get_total_price(self,cart):
         return sum([item.product.unit_price*item.quantity for item in cart.items.all()])
-        # all_prices = []
-        # items = CartItem.objects.select_related('product').all()
-        # for item in items:
-        #     single_item = item.product.unit_price * item.quantity
-        #     all_prices.append(single_item)
         
-        # return sum(all_prices)
 
 
 
