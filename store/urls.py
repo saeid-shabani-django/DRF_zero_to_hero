@@ -11,6 +11,9 @@ product_router.register('comments',views.CommentViewSet,basename='product_commen
 router.register('categories',views.CategoryViewSet,basename='category')
 
 router.register('carts',views.CartViewSet,basename='cart')
+cart_router = routers.NestedDefaultRouter(router,'carts',lookup='cart')
+cart_router.register('items',views.CartItemViewSet,basename='cartitem')
+
 
 urlpatterns = [
    # path('products/',views.products_list,name='products'),
@@ -19,4 +22,4 @@ urlpatterns = [
    # path('categories/',views.CategoryList.as_view(),name='categories'),
    # path('categories/<int:pk>/',views.CategoryDetail.as_view(),name='category_detail'),
    
-] + router.urls + product_router.urls
+] + router.urls + product_router.urls + cart_router.urls

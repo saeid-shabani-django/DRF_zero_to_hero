@@ -80,20 +80,55 @@ class CommentSerializer(serializers.ModelSerializer):
         # comment.save()
         return comment
    
+class ProductCartItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id','name','unit_price']
 
-class CartItemSerializer(serializers.ModelSerializer):
-    product = ProductSerializer()
+class CreateProductCartItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Product
+        fields = ['id']
+
+class CreateCartItemSerializer(serializers.ModelSerializer):
+    product = CreateProductCartItemSerializer()
     class Meta:
         model = CartItem
-        fields =['id','product','quantity']
+        fields = ['id','product','quantity']
+
+    def create(self, validated_data):
+        cart_pk = self.context.get('cart_pk')
+        return CartItem.objects.create(cart_id=cart_pk,**validated_data)
+
+
+
+class CartItemSerializer(serializers.ModelSerializer):
+    product = ProductCartItemSerializer()
+    class Meta:
+        model = CartItem
+        fields =['id','product','quantity','item_price']
+    item_price = serializers.SerializerMethodField()
+    def get_item_price(self,item):
+        return (item.product.unit_price * item.quantity)
 
 class CartSerializer(serializers.ModelSerializer):
-    items = CartItemSerializer(many=True)
+    items = CartItemSerializer(many=True,read_only=True)
     class Meta:
         model = Cart
-        fields = ['id','items']
-        read_only_fields=['id','items']
+        fields = ['id','items','total_price']
+        read_only_fields=['id',]
+    total_price = serializers.SerializerMethodField()
     
+    def get_total_price(self,cart):
+        return sum([item.product.unit_price*item.quantity for item in cart.items.all()])
+        # all_prices = []
+        # items = CartItem.objects.select_related('product').all()
+        # for item in items:
+        #     single_item = item.product.unit_price * item.quantity
+        #     all_prices.append(single_item)
+        
+        # return sum(all_prices)
+
 
 
 

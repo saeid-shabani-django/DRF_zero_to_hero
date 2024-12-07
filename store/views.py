@@ -2,7 +2,7 @@ from rest_framework import mixins
 from django.db import transaction, connection
 from django.db.models import F, ExpressionWrapper, DecimalField
 from django.shortcuts import get_object_or_404, redirect
-from .serializers import ProductSerializer, CategorySerializer, CommentSerializer,CartSerializer
+from .serializers import ProductSerializer, CategorySerializer, CommentSerializer,CartSerializer,CartItemSerializer,CreateCartItemSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Category, Comment, Product, Customer, OrderItem, Order,Cart,CartItem
@@ -257,6 +257,22 @@ class CartViewSet(mixins.CreateModelMixin,
                    mixins.UpdateModelMixin,
                    mixins.DestroyModelMixin,
                    GenericViewSet):
-    queryset = Cart.objects.all()
+    queryset = Cart.objects.prefetch_related('items__product').all()
     serializer_class = CartSerializer
+
+class CartItemViewSet(ModelViewSet):
+    
+    def get_queryset(self):
+        cart_pk = self.kwargs['cart_pk']
+        return CartItem.objects.select_related('product').filter(cart_id=cart_pk).all()
+        
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return CreateCartItemSerializer
+        return  CartItemSerializer
+    
+    def get_serializer_context(self):
+        cart_pk = self.kwargs['cart_pk']
+        return {'cart_pk':cart_pk}
+
 
