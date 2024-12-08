@@ -107,7 +107,10 @@ class CreateCartItemSerializer(serializers.ModelSerializer):
         
 
 
-
+class UpdateCartItemSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CartItem
+        fields = ['quantity']
 
 class CartItemSerializer(serializers.ModelSerializer):
     product = ProductCartItemSerializer(read_only=True)

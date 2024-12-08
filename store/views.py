@@ -2,7 +2,7 @@ from rest_framework import mixins
 from django.db import transaction, connection
 from django.db.models import F, ExpressionWrapper, DecimalField
 from django.shortcuts import get_object_or_404, redirect
-from .serializers import ProductSerializer, CategorySerializer, CommentSerializer,CartSerializer,CartItemSerializer,CreateCartItemSerializer
+from .serializers import ProductSerializer, CategorySerializer, CommentSerializer,CartSerializer,CartItemSerializer,CreateCartItemSerializer, UpdateCartItemSerializer
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Category, Comment, Product, Customer, OrderItem, Order,Cart,CartItem
@@ -259,8 +259,10 @@ class CartViewSet(mixins.CreateModelMixin,
                    GenericViewSet):
     queryset = Cart.objects.prefetch_related('items__product').all()
     serializer_class = CartSerializer
+    lookup_value_regex = '^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$'
 
 class CartItemViewSet(ModelViewSet):
+    http_method_names = ['get','patch', 'delete', 'head', 'options']
     
     def get_queryset(self):
         cart_pk = self.kwargs['cart_pk']
@@ -269,6 +271,8 @@ class CartItemViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == 'POST':
             return CreateCartItemSerializer
+        elif self.request.method == 'PATCH':
+            return UpdateCartItemSerializer
         return  CartItemSerializer
     
     def get_serializer_context(self):
