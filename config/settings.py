@@ -40,7 +40,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'debug_toolbar',
     'store',
-    'django_filters'
+    'django_filters',
+    'core',
     
 ]
 
@@ -134,7 +135,7 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
+AUTH_USER_MODEL = 'core.CustomUser'
 
 REST_FRAMEWORK = {
     'COERCE_DECIMAL_TO_STRING': False,
