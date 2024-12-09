@@ -49,6 +49,15 @@ class Customer(models.Model):
 
     def __str__(self):
         return f"{self.user.first_name} {self.user.last_name}"
+    
+    @property
+    def full_name(self):
+        return f'{self.user.first_name} {self.user.last_name}'
+
+    class Meta:
+        permissions =[
+            ('send_email','you can send private email')
+        ]
 
 
 class Address(models.Model):
