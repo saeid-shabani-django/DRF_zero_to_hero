@@ -17,7 +17,10 @@ Including another URLconf
 
 from django.contrib import admin
 from django.urls import path, include
-
+from rest_framework_simplejwt.views import (
+    TokenObtainPairView,
+    TokenRefreshView,
+)
 admin.site.site_header = "Store"
 admin.site.index_title = "Special Access"
 
@@ -25,4 +28,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path("store/", include("store.urls")),
     path("__debug__/", include("debug_toolbar.urls")),
+    path('auth/', include('djoser.urls')),
+    path('auth/', include('djoser.urls.jwt')),
+    path('api/token/', TokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('api/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
 ]
