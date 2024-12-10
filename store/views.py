@@ -4,6 +4,8 @@ from django.db.models import F, ExpressionWrapper, DecimalField
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+
+from store.permissions import IsAdminOrReadOnly
 from .serializers import (
     ProductSerializer,
     CategorySerializer,
@@ -244,6 +246,7 @@ class ProductViewSet(ModelViewSet):
 class CategoryViewSet(ModelViewSet):
     queryset = Category.objects.prefetch_related("products").all()
     serializer_class = CategorySerializer
+    permission_classes = [IsAdminOrReadOnly]
 
     def destory(self, request, pk):
 
@@ -320,7 +323,7 @@ class CustomerViewSet(ModelViewSet):
 
         elif request.method == "PUT":
             all_data = request.data
-            serializer = CustomerSerializer(customer, all_data)
+            serializer = CustomerSerializer(customer,data = all_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
