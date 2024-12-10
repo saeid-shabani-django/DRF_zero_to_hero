@@ -3,9 +3,9 @@ from django.db import transaction, connection
 from django.db.models import F, ExpressionWrapper, DecimalField
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from rest_framework.permissions import AllowAny,IsAdminUser, IsAuthenticated, DjangoModelPermissions
 
-from store.permissions import IsAdminOrReadOnly
+from store.permissions import IsAdminOrReadOnly,SendPrivateEmail
 from .serializers import (
     ProductSerializer,
     CategorySerializer,
@@ -327,3 +327,7 @@ class CustomerViewSet(ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
+        
+    @action(detail=True, permission_classes=[SendPrivateEmail])
+    def send_private_email(self,request,pk):
+        return Response('everythins is ok')
