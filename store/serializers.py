@@ -1,6 +1,8 @@
 from decimal import Decimal
 from rest_framework import serializers
-from .models import Category, Product, Comment, Cart, CartItem
+
+from config import settings
+from .models import Category, Customer, Product, Comment, Cart, CartItem
 from django.utils.text import slugify
 
 # class CategorySerializer(serializers.Serializer):
@@ -134,8 +136,12 @@ class CartSerializer(serializers.ModelSerializer):
         
 
 
-
-
+class CustomerSerializer(serializers.ModelSerializer):
+    
+    class Meta:
+        model = Customer
+        fields = ['id','user','birth_date','phone_number']
+        read_only_fields = ['id','user']
 
 
 

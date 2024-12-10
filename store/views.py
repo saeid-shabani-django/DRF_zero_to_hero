@@ -2,10 +2,30 @@ from rest_framework import mixins
 from django.db import transaction, connection
 from django.db.models import F, ExpressionWrapper, DecimalField
 from django.shortcuts import get_object_or_404, redirect
-from .serializers import ProductSerializer, CategorySerializer, CommentSerializer,CartSerializer,CartItemSerializer,CreateCartItemSerializer, UpdateCartItemSerializer
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from .serializers import (
+    ProductSerializer,
+    CategorySerializer,
+    CommentSerializer,
+    CartSerializer,
+    CartItemSerializer,
+    CreateCartItemSerializer,
+    UpdateCartItemSerializer,
+    CustomerSerializer,
+)
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from .models import Category, Comment, Product, Customer, OrderItem, Order,Cart,CartItem
+from .models import (
+    Category,
+    Comment,
+    Product,
+    Customer,
+    OrderItem,
+    Order,
+    Cart,
+    CartItem,
+)
 from rest_framework import status
 from rest_framework.views import APIView
 from rest_framework.generics import (
@@ -13,7 +33,7 @@ from rest_framework.generics import (
     RetrieveUpdateDestroyAPIView,
     GenericAPIView,
 )
-from rest_framework.filters import OrderingFilter,SearchFilter
+from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from django_filters.rest_framework import DjangoFilterBackend
 from .filters import ProductFilter
@@ -196,14 +216,17 @@ from .filters import ProductFilter
 class ProductViewSet(ModelViewSet):
     # queryset = Product.objects.select_related("category").all()
     serializer_class = ProductSerializer
-    filter_backends=[SearchFilter,DjangoFilterBackend,OrderingFilter]
+    filter_backends = [SearchFilter, DjangoFilterBackend, OrderingFilter]
     # filterset_fields =['category_id','name']
-    ordering_fields = ['inventory','unit_price']
-    search_fields = ['name',]
+    ordering_fields = ["inventory", "unit_price"]
+    search_fields = [
+        "name",
+    ]
     filterset_class = ProductFilter
+
     def get_queryset(self):
         queryset = Product.objects.select_related("category").all()
-        category_id = self.request.query_params.get('category_id')
+        category_id = self.request.query_params.get("category_id")
         if category_id is not None:
             return queryset.filter(category_id=category_id)
         else:
@@ -237,46 +260,67 @@ class CategoryViewSet(ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
 
-
 class CommentViewSet(ModelViewSet):
     serializer_class = CommentSerializer
-    
+
     def get_queryset(self):
-        product_pk = self.kwargs['product_pk']
+        product_pk = self.kwargs["product_pk"]
         comments = Comment.objects.filter(product_id=product_pk)
         return comments
-    
-    def get_serializer_context(self):
-        product_pk = self.kwargs['product_pk']
-        return {'product_pk':product_pk}
-    
-    
 
-class CartViewSet(mixins.CreateModelMixin,
-                   mixins.RetrieveModelMixin,
-                   mixins.UpdateModelMixin,
-                   mixins.DestroyModelMixin,
-                   GenericViewSet):
-    queryset = Cart.objects.prefetch_related('items__product').all()
+    def get_serializer_context(self):
+        product_pk = self.kwargs["product_pk"]
+        return {"product_pk": product_pk}
+
+
+class CartViewSet(
+    mixins.CreateModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    mixins.DestroyModelMixin,
+    GenericViewSet,
+):
+    queryset = Cart.objects.prefetch_related("items__product").all()
     serializer_class = CartSerializer
-    lookup_value_regex = '^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$'
+    lookup_value_regex = "^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$"
+
 
 class CartItemViewSet(ModelViewSet):
-    http_method_names = ['get','patch', 'delete', 'head', 'options']
-    
+    http_method_names = ["get", "patch", "delete", "head", "options"]
+
     def get_queryset(self):
-        cart_pk = self.kwargs['cart_pk']
-        return CartItem.objects.select_related('product').filter(cart_id=cart_pk).all()
-        
+        cart_pk = self.kwargs["cart_pk"]
+        return CartItem.objects.select_related("product").filter(cart_id=cart_pk).all()
+
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+        if self.request.method == "POST":
             return CreateCartItemSerializer
-        elif self.request.method == 'PATCH':
+        elif self.request.method == "PATCH":
             return UpdateCartItemSerializer
-        return  CartItemSerializer
-    
+        return CartItemSerializer
+
     def get_serializer_context(self):
-        cart_pk = self.kwargs['cart_pk']
-        return {'cart_pk':cart_pk}
+        cart_pk = self.kwargs["cart_pk"]
+        return {"cart_pk": cart_pk}
 
 
+class CustomerViewSet(ModelViewSet):
+    queryset = Customer.objects.all()
+    serializer_class = CustomerSerializer
+    permission_classes = [IsAdminUser]
+
+    @action(detail=False, methods=["get", "put"], permission_classes=[IsAuthenticated])
+    def me(self, request):
+        user_id = request.user.id
+        customer = Customer.objects.get(id=user_id)
+
+        if request.method == "GET":
+            serializer = CustomerSerializer(customer)
+            return Response(serializer.data)
+
+        elif request.method == "PUT":
+            all_data = request.data
+            serializer = CustomerSerializer(customer, all_data)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response(serializer.data)

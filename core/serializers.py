@@ -9,4 +9,5 @@ class UserCreateSerializer(DjangoUserCreateSerializer):
 class UserSerializer(DjangoUserSerializer):
     class Meta(DjangoUserSerializer.Meta):
         fields=['id','user','first_name']
+    
 
