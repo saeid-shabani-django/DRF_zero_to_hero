@@ -5,7 +5,7 @@ from django.shortcuts import get_object_or_404, redirect
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny,IsAdminUser, IsAuthenticated, DjangoModelPermissions
 
-from store.permissions import IsAdminOrReadOnly,SendPrivateEmail
+from store.permissions import CustomDjangoModelPermission, IsAdminOrReadOnly,SendPrivateEmail
 from .serializers import (
     ProductSerializer,
     CategorySerializer,
@@ -224,6 +224,7 @@ class ProductViewSet(ModelViewSet):
     search_fields = [
         "name",
     ]
+    # permission_classes = [CustomDjangoModelPermission,]
     filterset_class = ProductFilter
 
     def get_queryset(self):
@@ -330,4 +331,4 @@ class CustomerViewSet(ModelViewSet):
         
     @action(detail=True, permission_classes=[SendPrivateEmail])
     def send_private_email(self,request,pk):
-        return Response('everythins is ok')
+        return Response(f'everythins is ok you are number of {pk}')
