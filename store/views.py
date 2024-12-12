@@ -1,11 +1,21 @@
 from rest_framework import mixins
 from django.db import transaction, connection
-from django.db.models import F, ExpressionWrapper, DecimalField
+from django.db.models import F, ExpressionWrapper, DecimalField, Prefetch
 from django.shortcuts import get_object_or_404, redirect
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny,IsAdminUser, IsAuthenticated, DjangoModelPermissions
 
-from store.permissions import CustomDjangoModelPermission, IsAdminOrReadOnly,SendPrivateEmail
+from rest_framework.permissions import (
+    AllowAny,
+    IsAdminUser,
+    IsAuthenticated,
+    DjangoModelPermissions,
+)
+
+from store.permissions import (
+    CustomDjangoModelPermission,
+    IsAdminOrReadOnly,
+    SendPrivateEmail,
+)
 from .serializers import (
     ProductSerializer,
     CategorySerializer,
@@ -326,19 +336,21 @@ class CustomerViewSet(ModelViewSet):
 
         elif request.method == "PUT":
             all_data = request.data
-            serializer = CustomerSerializer(customer,data = all_data)
+            serializer = CustomerSerializer(customer, data=all_data)
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
-        
-    @action(detail=True, permission_classes=[SendPrivateEmail])
-    def send_private_email(self,request,pk):
-        return Response(f'everythins is ok you are number of {pk}')
 
+    @action(detail=True, permission_classes=[SendPrivateEmail])
+    def send_private_email(self, request, pk):
+        return Response(f"everythins is ok you are number of {pk}")
 
 
 class OrderViewSet(ModelViewSet):
-    queryset = Order.objects.all()
     serializer_class = OrderSerializer
     permission_classes = [IsAdminUser]
 
+    def get_queryset(self):
+        return Order.objects.select_related('customer__user').prefetch_related(
+            Prefetch("items",
+            queryset=OrderItem.objects.select_related("product"))).all()

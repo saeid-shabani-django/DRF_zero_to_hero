@@ -192,3 +192,5 @@ class CartAdmin(admin.ModelAdmin):
     list_display=['id','created_at']
     inlines = [CartItemInline]
 
+
+
