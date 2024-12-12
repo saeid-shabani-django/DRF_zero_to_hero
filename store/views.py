@@ -15,6 +15,8 @@ from .serializers import (
     CreateCartItemSerializer,
     UpdateCartItemSerializer,
     CustomerSerializer,
+    OrderSerializer,
+    OrderItemSerializer,
 )
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -332,3 +334,11 @@ class CustomerViewSet(ModelViewSet):
     @action(detail=True, permission_classes=[SendPrivateEmail])
     def send_private_email(self,request,pk):
         return Response(f'everythins is ok you are number of {pk}')
+
+
+
+class OrderViewSet(ModelViewSet):
+    queryset = Order.objects.all()
+    serializer_class = OrderSerializer
+    permission_classes = [IsAdminUser]
+
