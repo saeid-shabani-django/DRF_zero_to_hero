@@ -295,7 +295,6 @@ class CartViewSet(
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
-    
     GenericViewSet,
 ):
     # permission_classes=[IsAdminUser]
@@ -305,7 +304,7 @@ class CartViewSet(
 
 
 class CartItemViewSet(ModelViewSet):
-    http_method_names = ["get", "patch", "delete", "head", "options","post"]
+    http_method_names = ["get", "patch", "delete", "head", "options", "post"]
 
     def get_queryset(self):
         cart_pk = self.kwargs["cart_pk"]
@@ -350,31 +349,39 @@ class CustomerViewSet(ModelViewSet):
 
 
 class OrderViewSet(ModelViewSet):
-    
-    permission_classes = [IsAuthenticated]
+    http_method_names = ['post','get','head','options','patch','delete']
+    def get_permissions(self):
+        if self.request.method in ['DELETE','PATCH']:
+            return [IsAdminUser()]
+        return [IsAuthenticated()]
 
     def get_serializer_class(self):
-        if self.request.method == 'POST':
+        if self.request.method == "POST":
             return OrderCreateSerializer
         return OrderSerializer
 
     def get_queryset(self):
         if self.request.user.is_staff:
-            return Order.objects.select_related('customer').prefetch_related(
-                Prefetch("items",
-                queryset=OrderItem.objects.select_related("product"))).all()
+            return (
+                Order.objects.select_related("customer")
+                .prefetch_related(
+                    Prefetch(
+                        "items", queryset=OrderItem.objects.select_related("product")
+                    )
+                )
+                .all()
+            )
 
-        
-        
         return Order.objects.filter(customer__user_id=self.request.user.id)
-    
+
     def get_serializer_context(self):
         user_id = self.request.user.id
-        return {'user_id':user_id}
+        return {"user_id": user_id}
 
     def create(self, request, *args, **kwargs):
-        created_serializer = OrderCreateSerializer(data=request.data,context={'user_id':self.request.user.id})
+        created_serializer = OrderCreateSerializer(
+            data=request.data, context={"user_id": self.request.user.id}
+        )
         created_serializer.is_valid(raise_exception=True)
         final_serializer = created_serializer.save()
         return Response(OrderSerializer(final_serializer).data)
-        
