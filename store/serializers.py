@@ -4,7 +4,7 @@ from django.contrib.auth import get_user_model
 from config import settings
 from .models import Category, Customer, Product, Comment, Cart, CartItem, Order,OrderItem
 from django.utils.text import slugify
-
+from django.db import transaction
 # class CategorySerializer(serializers.Serializer):
 # id = serializers.IntegerField()
 # title = serializers.CharField(max_length=255)
@@ -177,27 +177,26 @@ class OrderCreateSerializer(serializers.Serializer):
         return cart_id
     
     def save(self, **kwargs):
-        cart_id = self.validated_data['cart_id']
-        user_id = self.context.get('user_id')
-
-        order = Order()
-        customer = Customer.objects.get(user_id = user_id)
-        order.customer = customer
-        order.save()
-        cart = Cart(id=cart_id)
-        items = cart.items.all()
-        order_items = list()
-        for cart_item in items:
-            order_item = OrderItem()
-            order_item.product_id = cart_item.product_id
-            order_item.order=order
-            order_item.quantity = cart_item.quantity
-            order_item.unit_price = cart_item.product.unit_price
-            order_items.append(order_item)
-            cart_item.delete()
-        Cart.objects.get(id=cart_id).delete()
-        OrderItem.objects.bulk_create(order_items)
-        return order
+        with transaction.atomic():
+            cart_id = self.validated_data['cart_id']
+            user_id = self.context.get('user_id')
+            customer = Customer.objects.get(user_id = user_id)
+            order = Order.objects.create(customer=customer)
+            order.save()
+            cart = Cart(id=cart_id)
+            items = cart.items.all()
+            order_items = list()
+            for cart_item in items:
+                order_item = OrderItem()
+                order_item.product = cart_item.product
+                order_item.order=order
+                order_item.quantity = cart_item.quantity
+                order_item.unit_price = cart_item.product.unit_price
+                order_items.append(order_item)
+                cart_item.delete()
+            Cart.objects.get(id=cart_id).delete()
+            OrderItem.objects.bulk_create(order_items)
+            return order
         
         
 
