@@ -228,3 +228,11 @@ class OrderCreateSerializer(serializers.Serializer):
             Cart.objects.get(id=cart_id).delete()
             OrderItem.objects.bulk_create(order_items)
             return order
+
+
+class OrderUpdateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Order
+        fields = ['status']
+
+

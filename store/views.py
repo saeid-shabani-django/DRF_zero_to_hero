@@ -28,6 +28,7 @@ from .serializers import (
     CustomerSerializer,
     OrderSerializer,
     OrderItemSerializer,
+    OrderUpdateSerializer,
 )
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
@@ -358,6 +359,8 @@ class OrderViewSet(ModelViewSet):
     def get_serializer_class(self):
         if self.request.method == "POST":
             return OrderCreateSerializer
+        if self.request.method == 'PATCH':
+            return OrderUpdateSerializer
         return OrderSerializer
 
     def get_queryset(self):
