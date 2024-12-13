@@ -17,6 +17,7 @@ from store.permissions import (
     SendPrivateEmail,
 )
 from .serializers import (
+    OrderCreateSerializer,
     ProductSerializer,
     CategorySerializer,
     CommentSerializer,
@@ -294,15 +295,17 @@ class CartViewSet(
     mixins.RetrieveModelMixin,
     mixins.UpdateModelMixin,
     mixins.DestroyModelMixin,
+    
     GenericViewSet,
 ):
+    # permission_classes=[IsAdminUser]
     queryset = Cart.objects.prefetch_related("items__product").all()
     serializer_class = CartSerializer
-    lookup_value_regex = "^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$"
+    # lookup_value_regex = "^[0-9a-fA-F]{8}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{4}\b-[0-9a-fA-F]{12}$"
 
 
 class CartItemViewSet(ModelViewSet):
-    http_method_names = ["get", "patch", "delete", "head", "options"]
+    http_method_names = ["get", "patch", "delete", "head", "options","post"]
 
     def get_queryset(self):
         cart_pk = self.kwargs["cart_pk"]
@@ -347,19 +350,26 @@ class CustomerViewSet(ModelViewSet):
 
 
 class OrderViewSet(ModelViewSet):
-    serializer_class = OrderSerializer
+    
     permission_classes = [IsAuthenticated]
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return OrderCreateSerializer
+        return OrderSerializer
 
     def get_queryset(self):
         if self.request.user.is_staff:
-            return Order.objects.select_related('customer__user').prefetch_related(
+            return Order.objects.select_related('customer').prefetch_related(
                 Prefetch("items",
                 queryset=OrderItem.objects.select_related("product"))).all()
 
         
         
-        return Order.objects.select_related('customer__user').filter(customer__user_id=self.request.user.id)
-            # customer = Customer.objects.get(id=user_id)
-            # return customer.orders
+        return Order.objects.filter(customer__user_id=self.request.user.id)
+    
+    def get_serializer_context(self):
+        user_id = self.request.user.id
+        return {'user_id':user_id}
 
 

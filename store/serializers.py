@@ -166,6 +166,42 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ['id','customer','status','items']
 
 
+class OrderCreateSerializer(serializers.Serializer):
+    cart_id = serializers.UUIDField()
 
+    def validate_cart_id(self,cart_id):
+        if not Cart.objects.filter(id=cart_id).exists():
+            raise serializers.ValidationError('the cart id you entered does not exist')
+        elif Cart.objects.filter(id=cart_id).count() == 0:
+            raise serializers.ValidationError('the cart is empty')
+        return cart_id
+    
+    def save(self, **kwargs):
+        cart_id = self.validated_data['cart_id']
+        user_id = self.context.get('user_id')
+
+        order = Order()
+        customer = Customer.objects.get(user_id = user_id)
+        order.customer = customer
+        order.save()
+        cart = Cart(id=cart_id)
+        items = cart.items.all()
+        order_items = list()
+        for cart_item in items:
+            order_item = OrderItem()
+            order_item.product_id = cart_item.product_id
+            order_item.order=order
+            order_item.quantity = cart_item.quantity
+            order_item.unit_price = cart_item.product.unit_price
+            order_items.append(order_item)
+            cart_item.delete()
+        Cart.objects.get(id=cart_id).delete()
+        OrderItem.objects.bulk_create(order_items)
+        return order
+        
+        
+
+
+    
 
 
